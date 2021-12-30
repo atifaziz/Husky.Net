@@ -263,14 +263,22 @@ public class TaskRunner
                AddMatchedFiles(pathMode, matches, args, await git.GitPath);
                continue;
             }
+            case "${committed}":
+            {
+               var committedFiles = await git.CommittedFiles;
+               if (committedFiles.Length < 1) continue;
+               var matches = matcher.Match(committedFiles);
+               AddMatchedFiles(pathMode, matches, args, await git.GitPath);
+               continue;
+            }
             case "${matched}":
             {
                var gitPath = await git.GitPath;
                var files = Directory.GetFiles(gitPath, "*", SearchOption.AllDirectories);
 
-               // exclude .git directory by default
-               if (task.Exclude is null)
-                  matcher.AddExclude(".git/**");
+               // exclude .git directory (absolute path)
+               var gitDir = await git.GitDirRelativePath;
+               matcher.AddExclude($"{gitDir}/**");
 
                var matches = matcher.Match(gitPath, files);
                AddMatchedFiles(pathMode, matches, args, gitPath);
